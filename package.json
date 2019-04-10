@@ -34,14 +34,20 @@
     "prettier": "^1.16.4"
   },
   "eslintConfig": {
+    "env": {
+      "es6": true
+    },
     "extends": [
       "plugin:prettier/recommended"
     ],
-    "env": {
-      "es6": true
+    "parserOptions": {
+      "ecmaVersion": 9
     }
   },
   "prettier": {
     "singleQuote": true
+  },
+  "dependencies": {
+    "path-to-regexp": "^3.0.0"
   }
 }
