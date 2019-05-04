@@ -3,7 +3,7 @@ const test = require('ava');
 const { router, route, prefix, withOptions } = require('.');
 
 test('`router` returns first non undefined result of given function', t => {
-  const fn = router([_ => {}, _ => 'response', _ => {}]);
+  const fn = router([() => {}, () => 'response', () => {}]);
 
   const result = fn();
 
@@ -11,70 +11,63 @@ test('`router` returns first non undefined result of given function', t => {
 });
 
 test('`route` sets params and calls given function on match', t => {
-  const options = { prefix: '' };
-  const fn = route('/:foo/:bar', 'GET', ({ params }) => params)(options);
+  const handler = request => {
+    t.deepEqual(request.params, { user: 'ct0r' });
+  };
 
-  const result = fn({
+  const fn = route('/:user', 'GET', handler)({ prefix: '' });
+
+  fn({
     method: 'GET',
-    url: '/test/route'
-  });
-
-  t.deepEqual(result, {
-    foo: 'test',
-    bar: 'route'
+    url: 'https://github.com/ct0r'
   });
 });
 
 test('`route` aggregates prefixes', t => {
-  const options = { prefix: '/test' };
-  const fn = route('/route', 'GET', _ => 'response')(options);
+  const options = { prefix: '/:user' };
+  const fn = route('/:repo', 'GET', () => t.pass())(options);
 
-  const result = fn({
+  fn({
     method: 'GET',
-    url: '/test/route'
+    url: 'https://github.com/ct0r/fetch-router'
   });
-
-  t.is(result, 'response');
 });
 
 test('`route` returns undefined if method does not match', t => {
-  const options = { prefix: '' };
-  const fn = route('/test/route', 'GET', _ => t.fail())(options);
+  const fn = route('/:user', 'GET', () => t.fail())();
 
   const result = fn({
     method: 'POST',
-    url: '/test/route'
+    url: 'https://github.com/ct0r'
   });
 
   t.is(result, undefined);
 });
 
 test('`route` returns undefined if url does not match', t => {
-  const options = { prefix: '' };
-  const fn = route('/test/route', 'GET', _ => t.fail())(options);
+  const fn = route('/:user', 'GET', () => t.fail())();
 
   const result = fn({
     method: 'GET',
-    url: '/'
+    url: 'https://github.com'
   });
 
   t.is(result, undefined);
 });
 
 test('`route` accepts routes ending with "/"', t => {
-  const options = { prefix: '' };
-  const fn = route('/test/route/', 'GET', t.pass)(options);
+  const fn = route('/:user/', 'GET', t.pass)();
 
   fn({
     method: 'GET',
-    url: '/'
+    url: 'https://github.com/ct0r'
   });
 });
 
 test('`prefix` aggregates prefixes', t => {
-  const fn = prefix('/route', [
-    withOptions(options => t.is(options.prefix, '/test/route'))
+  const fn = prefix('/:repo', [
+    withOptions(options => t.is(options.prefix, '/:user/:repo'))
   ]);
 
-  fn({ prefix: '/test' });
+  fn({ prefix: '/:user' });
 });

@@ -33,17 +33,21 @@ const prefix = (path, fns) => {
 };
 
 const route = (path, method, fn) => {
-  path = path.endsWith('/') ? path.substring(0, -1) : path;
   // TODO: validation
 
+  path = path.endsWith('/') ? path.slice(0, -1) : path;
+
   return withOptions(options => {
+    path = options && options.prefix ? options.prefix + path : path;
+
     const keys = [];
-    const regexp = pathToRegexp(options.prefix + path, keys);
+    const regexp = pathToRegexp(path, keys);
 
     return request => {
       if (request.method !== method) return;
 
-      const params = regexp.exec(request.url);
+      const url = new URL(request.url);
+      const params = regexp.exec(url.pathname);
       if (!params) return;
 
       request.params = {};
